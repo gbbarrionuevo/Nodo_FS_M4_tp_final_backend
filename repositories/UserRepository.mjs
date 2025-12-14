@@ -21,7 +21,7 @@ class UserRepository extends IRepository {
   }
 
   async getOne(data) {
-    return await User.findOne(data).populate({
+    return await User.findOne({ ...data, deletedAt: null }).populate({
       path: "roles",
       populate: {
         path: "permissions"
