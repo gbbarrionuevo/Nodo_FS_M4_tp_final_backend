@@ -149,6 +149,10 @@ try {
   const BATCH_SIZE = 50;
   const fullCards = [];
 
+  // Ajustar precio y cantidad de cartas según conveniencia
+  const MIN_PRICE = 50;
+  const MAX_CARDS = 500;
+
   for (let i = 0; i < list.length; i += BATCH_SIZE) {
     const batch = list.slice(i, i + BATCH_SIZE);
     const promises = batch.map(card => fetch(`${API_BASE}/${card.id}`).then(r => r.json()));
@@ -168,7 +172,12 @@ try {
 
         const stats = generateStats(detail.rarity);
         const price2 = extractRealPrice(detail.pricing);
-        const quantity = price2 === null ? 0 : stats.quantity;
+        // const quantity = price2 === null ? 0 : stats.quantity;
+        if (price2 === null || price2 < MIN_PRICE) {
+          continue;
+        }
+
+        const quantity = stats.quantity;
 
         fullCards.push({
           cardId: detail.id,
@@ -209,10 +218,15 @@ try {
               type: ab.type || null
             }))
             : [],
-          // price: stats.price,
           price: price2,
           quantity: quantity
         });
+
+        if (fullCards.length >= MAX_CARDS) {
+          console.log('Se alcanzaron 1000 cartas');
+          await Card.insertMany(fullCards);
+          process.exit(0);
+        }
 
         existingIds.add(detail.id);
       }
